@@ -1,4 +1,4 @@
-namespace Simple_ETL_Project.Services.CLIManagement;
+namespace Simple_ETL_Project.Services.CLIManagementService;
 
 public interface ICLIManagementService
 {
