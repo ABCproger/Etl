@@ -19,6 +19,7 @@ public class Program
             .Build();
 
         var serviceCollection = new ServiceCollection()
+            .AddSingleton<IConfiguration>(configuration) 
             .SetupServices(configuration);
         
         var serviceProvider = serviceCollection.BuildServiceProvider();

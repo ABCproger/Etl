@@ -1,7 +1,14 @@
 namespace Simple_ETL_Project.Services.CLIManagementService;
 
+using CsvProcessorService;
+
 public class CLIManagementService : ICLIManagementService
 {
+    private readonly ICsvProcessorService _csvProcessorService;
+    public CLIManagementService(ICsvProcessorService csvProcessorService)
+    {
+        _csvProcessorService = csvProcessorService;
+    }
     
     public async Task RunAsync()
     {
@@ -23,12 +30,12 @@ public class CLIManagementService : ICLIManagementService
             Console.WriteLine("3. Exit");
             Console.Write("\nSelect option (1-3): ");
 
-            string choice = Console.ReadLine();
+            var choice = Console.ReadLine();
 
             switch (choice)
             {
                 case "1":
-                    //await ImportData();
+                    await _csvProcessorService.ProcessCsvAsync();
                     break;
                 case "2":
                     await ShowAnalyticsMenu();

@@ -30,18 +30,18 @@ public class BulkInsertService : IBulkInsertService
         bulkCopy.DestinationTableName = tableName;
         bulkCopy.BatchSize = batchSize;
 
-        var table = CreateDataTable(records, _dbContext);
+        var table = CreateDataTable(records);
         
         foreach (DataColumn column in table.Columns)
         {
-            var destinationColumn = GetColumnNameFromContext<T>(_dbContext, column.ColumnName);
+            var destinationColumn = GetColumnNameFromContext<T>(column.ColumnName);
             bulkCopy.ColumnMappings.Add(column.ColumnName, destinationColumn);
         }
 
         await bulkCopy.WriteToServerAsync(table);
     }
 
-    private static string GetTableNameFromContext<T>(BaseDbContext context)
+    private string GetTableNameFromContext<T>(BaseDbContext context)
     {
         var entityType = context.Model.FindEntityType(typeof(T));
         var schema = entityType.GetSchema();
@@ -50,19 +50,17 @@ public class BulkInsertService : IBulkInsertService
         return string.IsNullOrEmpty(schema) ? tableName : $"{schema}.{tableName}";
     }
 
-    private static string GetColumnNameFromContext<T>(BaseDbContext context, string propertyName)
+    private string GetColumnNameFromContext<T>(string propertyName)
     {
-        var entityType = context.Model.FindEntityType(typeof(T));
+        var entityType = _dbContext.Model.FindEntityType(typeof(T));
         var property = entityType?.FindProperty(propertyName);
         return property?.GetColumnName() ?? propertyName.ToSnakeCase();
     }
 
-    private static DataTable CreateDataTable<T>(
-        IEnumerable<T> records,
-        BaseDbContext context)
+    private DataTable CreateDataTable<T>(IEnumerable<T> records)
     {
         var table = new DataTable();
-        var entityType = context.Model.FindEntityType(typeof(T));
+        var entityType = _dbContext.Model.FindEntityType(typeof(T));
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         
         foreach (var property in properties)
@@ -94,7 +92,7 @@ public class BulkInsertService : IBulkInsertService
         return table;
     }
 
-    private static Type GetColumnType(Type propertyType)
+    private Type GetColumnType(Type propertyType)
     {
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
         {

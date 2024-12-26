@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Services.BulkInsertService;
 using Services.CLIManagementService;
+using Services.CsvProcessorService;
 
 public static class ServiceCollectionExtensions
 {
@@ -13,6 +14,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<ICLIManagementService, CLIManagementService>();
         services.AddTransient<IBulkInsertService, BulkInsertService>();
+        services.AddTransient<ICsvProcessorService, CsvProcessorService>();
         
         services.AddDbContext<BaseDbContext>(options =>
         {

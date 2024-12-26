@@ -71,7 +71,7 @@ namespace Simple_ETL_Project.Migrations
                     b.HasKey("Id")
                         .HasName("pk_trip_datas");
 
-                    b.ToTable("trip_datas");
+                    b.ToTable("trip_datas", (string)null);
                 });
 #pragma warning restore 612, 618
         }
