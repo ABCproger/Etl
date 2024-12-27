@@ -111,6 +111,7 @@ public class CsvProcessorService : ICsvProcessorService
         catch (Exception ex)
         {
             _logger.LogError($"An error occurred while processing the CSV file: {ex.Message}", ex);
+            throw;
         }
     }
 
