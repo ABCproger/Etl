@@ -7,38 +7,57 @@ using Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 public class BulkInsertService : IBulkInsertService
 {
     private readonly string? _connectionString;
     private readonly BaseDbContext _dbContext;
+    private readonly ILogger<BulkInsertService> _logger;
 
-    public BulkInsertService(IConfiguration configuration, BaseDbContext dbContext)
+    public BulkInsertService(
+        IConfiguration configuration,
+        BaseDbContext dbContext,
+        ILogger<BulkInsertService> logger)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection");
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task BulkInsertAsync<T>(IEnumerable<T> records, int batchSize = 5000)
     {
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        using var bulkCopy = new SqlBulkCopy(connection);
-        
-        var tableName = GetTableNameFromContext<T>(_dbContext);
-        bulkCopy.DestinationTableName = tableName;
-        bulkCopy.BatchSize = batchSize;
-
-        var table = CreateDataTable(records);
-        
-        foreach (DataColumn column in table.Columns)
+        try
         {
-            var destinationColumn = GetColumnNameFromContext<T>(column.ColumnName);
-            bulkCopy.ColumnMappings.Add(column.ColumnName, destinationColumn);
-        }
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
 
-        await bulkCopy.WriteToServerAsync(table);
+            using var bulkCopy = new SqlBulkCopy(connection);
+        
+            var tableName = GetTableNameFromContext<T>(_dbContext);
+            bulkCopy.DestinationTableName = tableName;
+            bulkCopy.BatchSize = batchSize;
+
+            var table = CreateDataTable(records);
+        
+            foreach (DataColumn column in table.Columns)
+            {
+                var destinationColumn = GetColumnNameFromContext<T>(column.ColumnName);
+                bulkCopy.ColumnMappings.Add(column.ColumnName, destinationColumn);
+            }
+
+            await bulkCopy.WriteToServerAsync(table);
+        }
+        catch (SqlException sqlEx)
+        {
+            _logger.LogError(sqlEx, "An error occurred while performing bulk insert for table {TableName}.", typeof(T).Name);
+            throw new ApplicationException($"An error occurred while performing bulk insert for table {typeof(T).Name}.", sqlEx);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred during bulk insert for table {TableName}.", typeof(T).Name);
+            throw new ApplicationException($"An unexpected error occurred during bulk insert for table {typeof(T).Name}.", ex);
+        }
     }
 
     private string GetTableNameFromContext<T>(BaseDbContext context)

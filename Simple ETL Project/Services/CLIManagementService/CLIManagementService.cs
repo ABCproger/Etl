@@ -1,17 +1,23 @@
 namespace Simple_ETL_Project.Services.CLIManagementService;
 
 using CsvProcessorService;
+using Microsoft.Extensions.Logging;
 using TripDataService;
 
 public class CLIManagementService : ICLIManagementService
 {
     private readonly ICsvProcessorService _csvProcessorService;
     private readonly ITripDataService _tripDataService;
+    private readonly ILogger<CLIManagementService> _logger;
 
-    public CLIManagementService(ICsvProcessorService csvProcessorService, ITripDataService tripDataService)
+    public CLIManagementService(
+        ICsvProcessorService csvProcessorService,
+        ITripDataService tripDataService,
+        ILogger<CLIManagementService> logger)
     {
         _csvProcessorService = csvProcessorService;
         _tripDataService = tripDataService;
+        _logger = logger;
     }
 
     public async Task RunAsync()
@@ -97,10 +103,10 @@ public class CLIManagementService : ICLIManagementService
         {
             var result = await _tripDataService.GetPuLocationWithHighestAverageTipAsync();
             Console.WriteLine($"\n{result}");
-            await ShowAnalyticsMenu();
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error occurred while fetching PuLocation with highest average tip.");
             Console.WriteLine($"Error: {ex.Message}");
         }
 
@@ -134,10 +140,10 @@ public class CLIManagementService : ICLIManagementService
             {
                 Console.WriteLine("No trips found.");
             }
-            await ShowAnalyticsMenu();
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error occurred while fetching top 100 longest trips by distance.");
             Console.WriteLine($"Error: {ex.Message}");
         }
 
@@ -174,6 +180,7 @@ public class CLIManagementService : ICLIManagementService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error occurred while fetching top 100 longest trips by time.");
             Console.WriteLine($"Error: {ex.Message}");
         }
 
