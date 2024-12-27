@@ -2,11 +2,13 @@ namespace Simple_ETL_Project.Services.CsvProcessorService;
 
 using System.Globalization;
 using BulkInsertService;
+using Configurations.CsvConfigurations;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Database.Entities;
 using Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Models;
 
 public class CsvProcessorService : ICsvProcessorService
@@ -15,8 +17,12 @@ public class CsvProcessorService : ICsvProcessorService
     private readonly List<TripData> _batch = new();
     private readonly IBulkInsertService _bulkInsertService;
     private readonly ILogger<CsvProcessorService> _logger;
+    private readonly IOptions<CsvOptions> _options;
 
-    public CsvProcessorService(IBulkInsertService bulkInsertService, ILogger<CsvProcessorService> logger)
+    public CsvProcessorService(
+        IBulkInsertService bulkInsertService,
+        ILogger<CsvProcessorService> logger,
+        IOptions<CsvOptions> options)
     {
         _bulkInsertService = bulkInsertService;
         _logger = logger;
@@ -24,10 +30,10 @@ public class CsvProcessorService : ICsvProcessorService
 
     public async Task ProcessCsvAsync()
     {
-        const string duplicatesFilePath = "duplicates.csv";
+       
         try
         {
-            using var reader = new StreamReader($"F:\\projects\\Simple ETL Project\\sample-cab-data.csv");
+            using var reader = new StreamReader(_options.Value.DuplicatedFilePath);
             using var csvReader = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 TrimOptions = TrimOptions.Trim,
@@ -37,7 +43,7 @@ public class CsvProcessorService : ICsvProcessorService
             await csvReader.ReadAsync();
             csvReader.ReadHeader();
 
-            await using var duplicatesWriter = new StreamWriter(duplicatesFilePath);
+            await using var duplicatesWriter = new StreamWriter(_options.Value.DuplicatedFilePath);
             await using var csvDuplicatesWriter =
                 new CsvWriter(duplicatesWriter, new CsvConfiguration(CultureInfo.InvariantCulture));
 

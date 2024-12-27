@@ -8,6 +8,7 @@ using Services.BulkInsertService;
 using Services.CLIManagementService;
 using Services.CsvProcessorService;
 using Services.TripDataService;
+using Simple_ETL_Project.Configurations.CsvConfigurations;
 
 public static class ServiceCollectionExtensions
 {
@@ -23,6 +24,9 @@ public static class ServiceCollectionExtensions
         {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
         });
+
+        var csvOptions = new CsvOptions();
+        configuration.Bind(nameof(CsvOptions), csvOptions);
     
         return services;
     }
