@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection SetupServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddLogging();
         services.AddTransient<ICLIManagementService, CLIManagementService>();
         services.AddScoped<IBulkInsertService, BulkInsertService>();
         services.AddTransient<ICsvProcessorService, CsvProcessorService>();
