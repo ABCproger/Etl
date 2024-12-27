@@ -5,6 +5,7 @@ using BulkInsertService;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Database.Entities;
+using Extensions;
 using Models;
 
 public class CsvProcessorService : ICsvProcessorService
@@ -32,14 +33,12 @@ public class CsvProcessorService : ICsvProcessorService
         csvReader.ReadHeader();
 
         await using var duplicatesWriter = new StreamWriter(duplicatesFilePath);
-        await using var csvDuplicatesWriter = new CsvWriter(duplicatesWriter,
-            new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-            });
-        
+        await using var csvDuplicatesWriter =
+            new CsvWriter(duplicatesWriter, new CsvConfiguration(CultureInfo.InvariantCulture));
+
         csvDuplicatesWriter.WriteHeader<TripData>();
         await csvDuplicatesWriter.NextRecordAsync();
-        
+
         while (await csvReader.ReadAsync())
         {
             var csvRecord = new CsvTripDataModel
@@ -64,11 +63,13 @@ public class CsvProcessorService : ICsvProcessorService
                 congestion_surcharge = csvReader.GetField<decimal>("congestion_surcharge")
             };
 
+            var pickupDateTimeUtc = csvRecord.tpep_pickup_datetime.ConvertToUtcFromEst();
+            var dropoffDateTimeUtc = csvRecord.tpep_dropoff_datetime.ConvertToUtcFromEst();
 
             var record = new TripData
             {
-                TrepPickUpDateTime = csvRecord.tpep_pickup_datetime,
-                TrepDropOffDateTime = csvRecord.tpep_dropoff_datetime,
+                TrepPickUpDateTime = pickupDateTimeUtc,
+                TrepDropOffDateTime = dropoffDateTimeUtc,
                 PassengerCount = csvRecord.passenger_count,
                 TripDistance = csvRecord.trip_distance,
                 StoreAndFwdFlag = NormalizeFlag(csvRecord.store_and_fwd_flag),
